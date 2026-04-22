@@ -5,6 +5,20 @@ import type { AutocompleteProvider } from "@mariozechner/pi-tui";
 import { getOneOffBashCommandContext } from "./completion.ts";
 import type { GhostSuggestion } from "./types.ts";
 
+// Try to import ModalEditor from pi-vim for vim keybinding compatibility
+let BaseEditor: typeof CustomEditor = CustomEditor;
+try {
+  // @ts-ignore - pi-vim may not be installed
+  const piVim = await import("pi-vim");
+  if (piVim?.ModalEditor) {
+    BaseEditor = piVim.ModalEditor;
+    console.log("[pi-powerline-footer] Using ModalEditor from pi-vim - vim keybindings enabled!");
+  }
+} catch (error) {
+  // pi-vim not installed, use CustomEditor
+  console.log("[pi-powerline-footer] pi-vim not detected, using CustomEditor");
+}
+
 interface BashModeEditorOptions {
   keybindings: KeybindingsManager;
   isBashModeActive: () => boolean;
@@ -21,7 +35,7 @@ function isPrintableInput(data: string): boolean {
   return data.length === 1 && data.charCodeAt(0) >= 32;
 }
 
-export class BashModeEditor extends CustomEditor {
+export class BashModeEditor extends BaseEditor {
   private readonly keybindingsRef: KeybindingsManager;
   private readonly optionsRef: BashModeEditorOptions;
   private wrappedProviderInstalled = false;

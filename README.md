@@ -343,3 +343,29 @@ Colors can be:
 Icons can be any string, including `""` when you want to suppress a specific glyph entirely.
 
 See `theme.example.json` for all available options.
+
+---
+
+## Vim Compatibility (Fork Enhancement)
+
+This fork automatically detects and extends `ModalEditor` from `pi-vim` when available, giving you **both** powerline UI and vim keybindings together!
+
+**Installation with pi-vim:**
+```bash
+pi install npm:pi-vim
+pi install git:https://github.com/ianyimi/pi-powerline-footer
+```
+
+**Result:**
+- ✅ Full powerline status bar (model, git, context, etc.)
+- ✅ Vim modal editing (hjkl, dd, yy, visual mode, etc.)
+- ✅ Vim mode indicator (NORMAL/INSERT)
+- ✅ Bash mode and ghost suggestions
+- ✅ All powerline features
+
+**Without pi-vim:**
+Falls back to standard `CustomEditor` - works exactly like the original package.
+
+**Changes from upstream:**
+- `bash-mode/editor.ts`: Conditionally extends `ModalEditor` when pi-vim is detected
+- `package.json`: Added pi-vim as optional peer dependency

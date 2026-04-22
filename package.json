@@ -1,7 +1,7 @@
 {
   "name": "pi-powerline-footer",
-  "version": "0.4.16",
-  "description": "Powerline-style status bar extension for pi coding agent",
+  "version": "0.4.16-vim-compat",
+  "description": "Powerline-style status bar extension for pi coding agent (with vim compatibility)",
   "type": "module",
   "files": [
     "*.ts",
@@ -15,13 +15,22 @@
     "coding-agent",
     "powerline",
     "status-bar",
-    "extension"
+    "extension",
+    "vim"
   ],
   "author": "Nico Bailon",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nicobailon/pi-powerline-footer.git"
+    "url": "git+https://github.com/ianyimi/pi-powerline-footer.git"
+  },
+  "peerDependencies": {
+    "pi-vim": "*"
+  },
+  "peerDependenciesMeta": {
+    "pi-vim": {
+      "optional": true
+    }
   },
   "scripts": {
     "test": "node --experimental-strip-types --test tests/**/*.test.ts"
