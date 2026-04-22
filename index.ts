@@ -961,7 +961,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     initVibeManager(ctx);
     
     if (enabled && ctx.hasUI) {
-      setupCustomEditor(ctx);
+      await setupCustomEditor(ctx);
       if (event.reason === "startup") {
         if (settings.quietStartup === true) {
           setupWelcomeHeader(ctx);
@@ -1271,7 +1271,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
         // Toggle
         enabled = !enabled;
         if (enabled) {
-          setupCustomEditor(ctx);
+          await setupCustomEditor(ctx);
           ctx.ui.notify("Powerline enabled", "info");
         } else {
           shellSession?.dispose();
@@ -1304,7 +1304,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
         config.preset = preset;
         lastLayoutResult = null;
         if (enabled) {
-          setupCustomEditor(ctx);
+          await setupCustomEditor(ctx);
         }
 
         if (writePowerlinePresetSetting(preset, ctx.cwd)) {
@@ -1680,7 +1680,41 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     return lastLayoutResult;
   }
 
-  function setupCustomEditor(ctx: any) {
+  async function setupCustomEditor(ctx: any) {
+    // Try to detect pi-vim and use ModalEditor as base class  
+    let EditorClass = BashModeEditor;
+    try {
+      // @ts-ignore - pi-vim may not be installed
+      const piVim = await import("pi-vim");
+      if (piVim?.ModalEditor) {
+        console.log("[pi-powerline-footer] Detected pi-vim! Creating vim-compatible editor.");
+        
+        // Create new class that extends ModalEditor and mixes in BashModeEditor behavior
+        EditorClass = class VimCompatibleBashEditor extends piVim.ModalEditor {
+          constructor(tui: any, theme: any, keybindings: any, options: any) {
+            super(tui, theme, keybindings);
+            // Mix in BashModeEditor initialization
+            const bashEditor = Object.create(BashModeEditor.prototype);
+            BashModeEditor.call(bashEditor, tui, theme, keybindings, options);
+            // Copy instance properties
+            Object.assign(this, bashEditor);
+          }
+        } as any;
+        
+        // Copy all BashModeEditor prototype methods
+        Object.getOwnPropertyNames(BashModeEditor.prototype).forEach(name => {
+          if (name !== 'constructor' && name !== 'handleInput') {
+            const descriptor = Object.getOwnPropertyDescriptor(BashModeEditor.prototype, name);
+            if (descriptor) {
+              Object.defineProperty(EditorClass.prototype, name, descriptor);
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.log("[pi-powerline-footer] pi-vim not found, using standard editor");
+    }
+
     snapshotPromptHistory(currentEditor);
     if (!enabled) {
       return;
@@ -1689,7 +1723,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     let autocompleteFixed = false;
 
     const editorFactory = (tui: any, editorTheme: any, keybindings: any) => {
-      const editor = new BashModeEditor(tui, editorTheme, keybindings, {
+      const editor = new EditorClass(tui, editorTheme, keybindings, {
         keybindings,
         isBashModeActive: () => bashModeActive,
         isShellRunning: () => shellSession?.state.running ?? false,
